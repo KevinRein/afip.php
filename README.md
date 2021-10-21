@@ -14,7 +14,7 @@
     <img src="https://github.com/afipsdk/afipsdk.github.io/blob/master/images/logo-colored.png" alt="Logo" width="130" height="130">
   </a>
 
-  <h3 align="center">Afip.php</h3>
+  <h3 align="center">Afip.php - Fork by Kevin Reinhardt</h3>
 
   <p align="center">
     Librería para conectarse a los Web Services de AFIP
