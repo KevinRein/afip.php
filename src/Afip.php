@@ -381,6 +381,19 @@ class AfipWebService
 		}
 
 		$results = $this->soap_client->{$operation}($params);
+		
+		if ($operation == 'FECAESolicitar') {
+			//Debug
+			\Log::info('Request CreateVoucher xml');
+			\Log::debug($this->soap_client->__getLastRequest());
+			\Log::info('Request CreateVoucher json');
+			\Log::debug(json_encode($params));
+
+			\Log::info('Response CreateVoucher xml');
+			\Log::debug($this->soap_client->__getLastResponse());
+			\Log::info('Response CreateVoucher json');
+			\Log::debug(json_encode($results));
+		}
 
 		$this->_CheckErrors($operation, $results);
 
