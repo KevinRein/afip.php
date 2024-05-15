@@ -375,6 +375,10 @@ class ElectronicBilling extends AfipWebService {
 			}
 		}
 
+		\Log::error('Request Error xml', [ 'xml' => $this->soap_client->__getLastRequest() ]);
+
+		\Log::error('Response Error xml', [ 'xml' => $this->soap_client->__getLastResponse() ]);
+
 		if (isset($res->Errors)) {
 			$err = is_array($res->Errors->Err) ? $res->Errors->Err[0] : $res->Errors->Err;
 			throw new Exception('('.$err->Code.') '.$err->Msg, $err->Code);
