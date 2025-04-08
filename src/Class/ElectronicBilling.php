@@ -6,7 +6,6 @@
  *
  * @author 	Afip SDK
  * @package Afip
- * @version 0.7
  **/
 
 class ElectronicBilling extends AfipWebService {
@@ -16,6 +15,54 @@ class ElectronicBilling extends AfipWebService {
 	var $URL 			= 'https://servicios1.afip.gov.ar/wsfev1/service.asmx';
 	var $WSDL_TEST 		= 'wsfe.wsdl';
 	var $URL_TEST 		= 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx';
+
+	function __construct($afip) {
+        parent::__construct($afip, array('service' => 'wsfe'));
+    }
+
+	/**
+	 * Create PDF 
+	 * 
+	 * Send a request to Afip SDK server to create a PDF
+	 *
+	 * @param array $data Data for PDF creation
+	 **/
+	public function CreatePDF($data)
+	{
+		$headers = array(
+			'sdk-version-number' => $this->afip->sdk_version_number,
+			'sdk-library' => 'php',
+			'sdk-environment' => $this->afip->options['production'] === TRUE ? "prod" : "dev"
+		);
+
+		if (isset($this->afip->options['access_token'])) {
+			$headers['Authorization'] = 'Bearer '.$this->afip->options['access_token'];
+		}
+
+		$request = Requests::post('https://app.afipsdk.com/api/v1/pdfs', $headers, $data);
+
+		if ($request->success) {
+			$decoded_res = json_decode($request->body);
+
+			return array(
+				"file" => $decoded_res->file,
+				"file_name" => $decoded_res->file_name
+			);
+		}
+		else {
+			$error_message = $request->body;
+
+			try {
+				$json_res = json_decode($request->body);
+
+				if (isset($json_res->message)) {
+					$error_message = $json_res->message;
+				}
+			} catch (Exception $e) {}
+
+			throw new Exception($error_message);
+		}
+	}
 
 	/**
 	 * Gets last voucher number 
@@ -83,6 +130,12 @@ class ElectronicBilling extends AfipWebService {
 		if (isset($data['Tributos'])) 
 			$data['Tributos'] = array('Tributo' => $data['Tributos']);
 
+		if (isset($data['Compradores'])) 
+			$data['Compradores'] = array('Comprador' => $data['Compradores']);
+		
+		if (isset($data['CbtesAsoc'])) 
+			$data['CbtesAsoc'] = array('CbteAsoc' => $data['CbtesAsoc']);
+
 		if (isset($data['Iva'])) 
 			$data['Iva'] = array('AlicIva' => $data['Iva']);
 
@@ -130,9 +183,9 @@ class ElectronicBilling extends AfipWebService {
 
 		$data['CbteDesde'] = $voucher_number;
 		$data['CbteHasta'] = $voucher_number;
-
-		$res 					= $this->CreateVoucher($data, $return_response);
-		$res->voucher_number 	= $voucher_number;
+		
+		$res                   = $this->CreateVoucher($data, $return_response);
+		$res['voucher_number'] = $voucher_number;
 
 		return $res;
 	}
@@ -172,6 +225,42 @@ class ElectronicBilling extends AfipWebService {
 		}
 
 		return $result->ResultGet;
+	}
+
+	/**
+	 * Create CAEA 
+	 * 
+	 * Send a request to AFIP servers  to create a CAEA
+	 *
+	 * @param int $period 		Time period
+	 * @param int $fortnight	Monthly fortnight (1 or 2)
+	 **/
+	public function CreateCAEA($period, $fortnight)
+	{
+		$req = array(
+			'Periodo' => $period,
+			'Orden' => $fortnight
+		);
+
+		return $this->ExecuteRequest('FECAEASolicitar', $req)->ResultGet;
+	}
+
+	/**
+	 * Get CAEA 
+	 * 
+	 * Ask to AFIP servers for a CAEA information
+	 *
+	 * @param int $period 		Time period
+	 * @param int $fortnight	Monthly fortnight (1 or 2)
+	 **/
+	public function GetCAEA($period, $fortnight)
+	{
+		$req = array(
+			'Periodo' => $period,
+			'Orden' => $fortnight
+		);
+
+		return $this->ExecuteRequest('FECAEAConsultar', $req)->ResultGet;
 	}
 
 	/**
@@ -317,6 +406,8 @@ class ElectronicBilling extends AfipWebService {
 	 **/
 	public function ExecuteRequest($operation, $params = array())
 	{
+		$this->options = array('service' => 'wsfe');
+
 		$params = array_replace($this->GetWSInitialRequest($operation), $params); 
 
 		$results = parent::ExecuteRequest($operation, $params);
@@ -367,8 +458,12 @@ class ElectronicBilling extends AfipWebService {
 	private function _CheckErrors($operation, $results)
 	{
 		$res = $results->{$operation.'Result'};
+		
+		if ($operation == 'FECAESolicitar' && isset($res->FeDetResp)) {
+			if (is_array($res->FeDetResp->FECAEDetResponse)) {
+				$res->FeDetResp->FECAEDetResponse = $res->FeDetResp->FECAEDetResponse[0];
+			}
 
-		if ($operation == 'FECAESolicitar') {
 			if (isset($res->FeDetResp->FECAEDetResponse->Observaciones) && $res->FeDetResp->FECAEDetResponse->Resultado != 'A') {
 				$res->Errors = new StdClass();
 				$res->Errors->Err = $res->FeDetResp->FECAEDetResponse->Observaciones->Obs;

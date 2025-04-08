@@ -1,12 +1,6 @@
 <?php
 /**
- * SDK for AFIP Register Scope Five (ws_sr_padron_a5)
- * 
- * @link http://www.afip.gob.ar/ws/ws_sr_padron_a5/manual_ws_sr_padron_a5_v1.0.pdf WS Specification
- *
- * @author 	Afip SDK
- * @package Afip
- * @version 1.0
+ * SDK for AFIP Register Inscription Proof (ws_sr_constancia_inscripcion)
  **/
 
 class RegisterInscriptionProof extends AfipWebService {
@@ -16,6 +10,10 @@ class RegisterInscriptionProof extends AfipWebService {
 	var $URL 			= 'https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA5';
 	var $WSDL_TEST 		= 'ws_sr_padron_a5.wsdl';
 	var $URL_TEST 		= 'https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5';
+
+	function __construct($afip) {
+        parent::__construct($afip, array('service' => 'ws_sr_constancia_inscripcion'));
+    }
 
 	/**
 	 * Asks to web service for servers status {@see WS 
@@ -46,7 +44,7 @@ class RegisterInscriptionProof extends AfipWebService {
 	**/
 	public function GetTaxpayerDetails($identifier)
 	{
-		$ta = $this->afip->GetServiceTA('ws_sr_padron_a5');
+		$ta = $this->afip->GetServiceTA('ws_sr_constancia_inscripcion');
 		
 		$params = array(
 			'token' 			=> $ta->token,
@@ -74,7 +72,7 @@ class RegisterInscriptionProof extends AfipWebService {
 	**/
 	public function GetTaxpayersDetails($identifiers)
 	{
-		$ta = $this->afip->GetServiceTA('ws_sr_padron_a5');
+		$ta = $this->afip->GetServiceTA('ws_sr_constancia_inscripcion');
 		
 		$params = array(
 			'token' 			=> $ta->token,
@@ -98,6 +96,8 @@ class RegisterInscriptionProof extends AfipWebService {
 	 **/
 	public function ExecuteRequest($operation, $params = array())
 	{
+		$this->options = array('service' => 'ws_sr_constancia_inscripcion');
+
 		$results = parent::ExecuteRequest($operation, $params);
 
 		return $results->{

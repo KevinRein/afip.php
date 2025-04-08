@@ -17,6 +17,10 @@ class RegisterScopeFive extends AfipWebService {
 	var $WSDL_TEST 		= 'ws_sr_padron_a5.wsdl';
 	var $URL_TEST 		= 'https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5';
 
+	function __construct($afip) {
+        parent::__construct($afip, array('service' => 'ws_sr_padron_a5'));
+    }
+
 	/**
 	 * Asks to web service for servers status {@see WS 
 	 * Specification item 3.1}
@@ -98,6 +102,8 @@ class RegisterScopeFive extends AfipWebService {
 	 **/
 	public function ExecuteRequest($operation, $params = array())
 	{
+		$this->options = array('service' => 'ws_sr_padron_a5');
+		
 		$results = parent::ExecuteRequest($operation, $params);
 
 		return $results->{
