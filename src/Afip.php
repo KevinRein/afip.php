@@ -418,3 +418,94 @@ class AfipWebService
 			throw new Exception("SOAP Fault: ".$results->faultcode."\n".$results->faultstring."\n", 4);
 	}
 }
+
+class AfipWsdlUpdate
+{	
+	/**
+	 * Version de SOAP que requiere el web service
+	 * 
+	 * Si no estas seguro de que version necesitas proba 
+	 * con ambas opciones (SOAP_1_1 o SOAP_1_2)
+	 **/
+	const soap_version = SOAP_1_1;
+	private $services;
+
+	/**
+	 * The Afip parent Class
+	 *
+	 * @var Afip
+	 **/
+
+	function __construct()
+	{
+		
+		$this->services = array(
+			// 'wsaa' => 'LoginCms',
+			'wsfe' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+			'ws_sr_padron_a4' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+			'ws_sr_padron_a5' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+			'ws_sr_padron_a10' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+			'ws_sr_padron_a13' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+			'ws_sr_constancia_inscripcion' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+		);
+	}
+
+	public function updateAllWsdl()
+	{
+		foreach ($this->services as $service => $wsdl) {
+			$this->updateWsdl($service);
+		}
+		foreach ($this->services as $service => $wsdl) {
+			$this->updateWsdl($service, true);
+		}
+	}
+
+	/**
+	 * Update the WSDL file
+	 *
+	 * @since 1.0
+	 *
+	 * @param string 	$wsdl 	SOAP WSDL to update 
+	 *
+	 * @return void 
+	 **/
+	public function updateWsdl($service, $is_production = false)
+	{
+		$wsdl = $is_production ? self::WSDL : self::WSDL_TEST;
+		$wsdl = str_replace('{SERVICE}', $service, $wsdl);
+		$filename = $is_production ? 
+			$service . '-production' :
+			$service;
+
+		//Check if Wsdl file exists and create or update file in ./Afip_res/
+		if (file_exists($wsdl)) {
+			//Check if Wsdl file is not empty
+			if (filesize($wsdl) > 0) {
+				//Update WSDL file
+				file_put_contents(__DIR__.'/Afip_res/' . $filename . '.wsdl', file_get_contents($wsdl));
+			} else {
+				throw new Exception("Failed to open ".$wsdl."\n", 1);
+			}
+		} else {
+			throw new Exception("Failed to open ".$wsdl."\n", 1);
+		}
+	}
+}
