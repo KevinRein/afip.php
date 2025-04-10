@@ -445,26 +445,6 @@ class AfipWsdlUpdate
 				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
 				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
 			],
-			'ws_sr_padron_a4' => [
-				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
-			],
-			'ws_sr_padron_a5' => [
-				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
-			],
-			'ws_sr_padron_a10' => [
-				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
-			],
-			'ws_sr_padron_a13' => [
-				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
-			],
-			'ws_sr_constancia_inscripcion' => [
-				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
-			],
 		);
 	}
 
@@ -489,8 +469,9 @@ class AfipWsdlUpdate
 	 **/
 	public function updateWsdl($service, $is_production = false)
 	{
-		$wsdl = $is_production ? self::WSDL : self::WSDL_TEST;
-		$wsdl = str_replace('{SERVICE}', $service, $wsdl);
+		$wsdl_test = $this->services[$service]['test'];
+		$wsdl_prod = $this->services[$service]['prod'];
+		$wsdl = $is_production ? $wsdl_prod : $wsdl_test;
 		$filename = $is_production ? 
 			$service . '-production' :
 			$service;
