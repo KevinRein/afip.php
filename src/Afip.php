@@ -127,8 +127,8 @@ class Afip {
 
 		$this->options = $options;
 
-		$this->CERT 		= $options['cert']; //Cert Content
-		$this->PRIVATEKEY 	= $options['key']; //Key Content
+		$this->CERT 		= $this->RES_FOLDER.$options['cert'];
+		$this->PRIVATEKEY 	= $this->RES_FOLDER.$options['key'];
 
 		$this->WSAA_WSDL 	= __DIR__.'/Afip_res/'.'wsaa.wsdl';
 		if ($options['production'] === TRUE) {
@@ -137,12 +137,12 @@ class Afip {
 			$this->WSAA_URL = 'https://wsaahomo.afip.gov.ar/ws/services/LoginCms';
 		}
 
-		if (empty($this->CERT)) 
-			throw new Exception("Failed to get CERT ".$this->CERT."\n", 1);
-		if (empty($this->PRIVATEKEY)) 
-			throw new Exception("Failed to get KEY ".$this->PRIVATEKEY."\n", 2);
+		if (!file_exists($this->CERT)) 
+			throw new Exception("Failed to open ".$this->CERT."\n", 1);
+		if (!file_exists($this->PRIVATEKEY)) 
+			throw new Exception("Failed to open ".$this->PRIVATEKEY."\n", 2);
 		if (!file_exists($this->WSAA_WSDL)) 
-			throw new Exception("Failed to open WSAA ".$this->WSAA_WSDL."\n", 3);
+			throw new Exception("Failed to open ".$this->WSAA_WSDL."\n", 3);
 	}
 
 	/**
@@ -202,20 +202,9 @@ class Afip {
 		$TRA->addChild('service',$service);
 		$TRA->asXML($this->TA_FOLDER.'TRA-'.$this->options['CUIT'].'-'.$service.'.xml');
 
-		$certStream = fopen('php://memory', 'r+');
-		fwrite($certStream, $this->CERT); 
-		rewind($certStream); 
-
-		$keyStream = fopen('php://memory', 'r+');
-		fwrite($keyStream, $this->PRIVATEKEY); 
-		rewind($keyStream);
-	
-		// Firmar el TRA usando el contenido del cert
-		$STATUS = openssl_pkcs7_sign(
-			$this->TA_FOLDER . "TRA-" . $this->options['CUIT'] . '-' . $service . ".xml",
-			$this->TA_FOLDER . "TRA-" . $this->options['CUIT'] . '-' . $service . ".tmp",
-			$certStream, 
-			array($keyStream, $this->PASSPHRASE),
+		//Signing TRA
+		$STATUS = openssl_pkcs7_sign($this->TA_FOLDER."TRA-".$this->options['CUIT'].'-'.$service.".xml", $this->TA_FOLDER."TRA-".$this->options['CUIT'].'-'.$service.".tmp", "file://".$this->CERT,
+			array("file://".$this->PRIVATEKEY, $this->PASSPHRASE),
 			array(),
 			!PKCS7_DETACHED
 		);
@@ -453,8 +442,8 @@ class AfipWsdlUpdate
 		$this->services = array(
 			// 'wsaa' => 'LoginCms',
 			'wsfe' => [
-				'test' => 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
-				'prod' => 'https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
 			],
 		);
 	}
@@ -487,13 +476,17 @@ class AfipWsdlUpdate
 			$service . '-production' :
 			$service;
 
-		$file = file_get_contents($wsdl);
-
-		//Check if the url is returning a WSDL file
-		if ($file !== false) {
-			file_put_contents(__DIR__.'/Afip_res/' . $filename . '.wsdl', $file);
+		//Check if Wsdl file exists and create or update file in ./Afip_res/
+		if (file_exists($wsdl)) {
+			//Check if Wsdl file is not empty
+			if (filesize($wsdl) > 0) {
+				//Update WSDL file
+				file_put_contents(__DIR__.'/Afip_res/' . $filename . '.wsdl', file_get_contents($wsdl));
+			} else {
+				throw new Exception("Failed to open ".$wsdl."\n", 1);
+			}
 		} else {
-			throw new Exception("Failed to open: ".$wsdl."\n", 1);
+			throw new Exception("Failed to open ".$wsdl."\n", 1);
 		}
 	}
 }
