@@ -385,14 +385,14 @@ class AfipWebService
 		if ($operation == 'FECAESolicitar') {
 			//Debug
 			\Log::info('Request CreateVoucher xml');
-			\Log::debug($this->soap_client->__getLastRequest());
+			\Log::info($this->soap_client->__getLastRequest());
 			\Log::info('Request CreateVoucher json');
-			\Log::debug(json_encode($params));
+			\Log::info(json_encode($params));
 
 			\Log::info('Response CreateVoucher xml');
-			\Log::debug($this->soap_client->__getLastResponse());
+			\Log::info($this->soap_client->__getLastResponse());
 			\Log::info('Response CreateVoucher json');
-			\Log::debug(json_encode($results));
+			\Log::info(json_encode($results));
 		}
 
 		$this->_CheckErrors($operation, $results);
@@ -416,5 +416,77 @@ class AfipWebService
 	{
 		if (is_soap_fault($results)) 
 			throw new Exception("SOAP Fault: ".$results->faultcode."\n".$results->faultstring."\n", 4);
+	}
+}
+
+class AfipWsdlUpdate
+{	
+	/**
+	 * Version de SOAP que requiere el web service
+	 * 
+	 * Si no estas seguro de que version necesitas proba 
+	 * con ambas opciones (SOAP_1_1 o SOAP_1_2)
+	 **/
+	const soap_version = SOAP_1_1;
+	private $services;
+
+	/**
+	 * The Afip parent Class
+	 *
+	 * @var Afip
+	 **/
+
+	function __construct()
+	{
+		
+		$this->services = array(
+			// 'wsaa' => 'LoginCms',
+			'wsfe' => [
+				'test' => 'https://wsaahomo.afip.gov.ar/wsfev1/service.asmx?WSDL',
+				'prod' => 'http://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL'
+			],
+		);
+	}
+
+	public function updateAllWsdl()
+	{
+		foreach ($this->services as $service => $wsdl) {
+			$this->updateWsdl($service);
+		}
+		foreach ($this->services as $service => $wsdl) {
+			$this->updateWsdl($service, true);
+		}
+	}
+
+	/**
+	 * Update the WSDL file
+	 *
+	 * @since 1.0
+	 *
+	 * @param string 	$wsdl 	SOAP WSDL to update 
+	 *
+	 * @return void 
+	 **/
+	public function updateWsdl($service, $is_production = false)
+	{
+		$wsdl_test = $this->services[$service]['test'];
+		$wsdl_prod = $this->services[$service]['prod'];
+		$wsdl = $is_production ? $wsdl_prod : $wsdl_test;
+		$filename = $is_production ? 
+			$service . '-production' :
+			$service;
+
+		//Check if Wsdl file exists and create or update file in ./Afip_res/
+		if (file_exists($wsdl)) {
+			//Check if Wsdl file is not empty
+			if (filesize($wsdl) > 0) {
+				//Update WSDL file
+				file_put_contents(__DIR__.'/Afip_res/' . $filename . '.wsdl', file_get_contents($wsdl));
+			} else {
+				throw new Exception("Failed to open ".$wsdl."\n", 1);
+			}
+		} else {
+			throw new Exception("Failed to open ".$wsdl."\n", 1);
+		}
 	}
 }

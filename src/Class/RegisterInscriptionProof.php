@@ -46,7 +46,7 @@ class RegisterInscriptionProof extends AfipWebService {
 	**/
 	public function GetTaxpayerDetails($identifier)
 	{
-		$ta = $this->afip->GetServiceTA('ws_sr_padron_a5');
+		$ta = $this->afip->GetServiceTA('ws_sr_constancia_inscripcion');
 		
 		$params = array(
 			'token' 			=> $ta->token,
@@ -56,7 +56,7 @@ class RegisterInscriptionProof extends AfipWebService {
 		);
 
 		try {
-			return $this->ExecuteRequest('getPersona_v2', $params);
+			return $this->ExecuteRequest('getPersona', $params);
 		} catch (Exception $e) {
 			if (strpos($e->getMessage(), 'No existe') !== FALSE)
 				return NULL;
@@ -74,7 +74,7 @@ class RegisterInscriptionProof extends AfipWebService {
 	**/
 	public function GetTaxpayersDetails($identifiers)
 	{
-		$ta = $this->afip->GetServiceTA('ws_sr_padron_a5');
+		$ta = $this->afip->GetServiceTA('ws_sr_constancia_inscripcion');
 		
 		$params = array(
 			'token' 			=> $ta->token,
@@ -101,7 +101,7 @@ class RegisterInscriptionProof extends AfipWebService {
 		$results = parent::ExecuteRequest($operation, $params);
 
 		return $results->{
-			$operation === 'getPersona_v2' ? 'personaReturn' :
+			$operation === 'getPersona' ? 'personaReturn' :
 				($operation === 'getPersonaList_v2' ? 'personaListReturn': 'return')
 			};
 	}
